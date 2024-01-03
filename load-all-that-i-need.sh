@@ -34,6 +34,7 @@ banner "Installing i3, alacritty and fish"
 sudo pacman -S i3
 sudo pacman -S alacritty 
 sudo pacman -S fish
+sudo pacman -S feh
 fish 
 echo /usr/local/bin/fish | sudo tee -a /etc/shells
 chsh -s /usr/local/bin/fish
@@ -45,7 +46,9 @@ cd /akame/home/
 mkdir .config
 cd .config
 git clone https://github.com/moraeskkj/dotfiles.git
+cp scripts/* ~/scripts
 rm -rf arch-ricing.png picom qtile README.md .gitignore
+
 
 echo "Please don't forget to make sure that all config are correctly"
 
