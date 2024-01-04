@@ -10,7 +10,7 @@ NC='\033[0m'
 
 # Set environment variables for the desired user
 export USER=$original_user
-export HOME="/home/$original_user/"
+export HOME="/home/$original_user"
 
 # Function to display colorful banners
 banner()
@@ -36,26 +36,37 @@ if [ -z "$PYENV_ROOT" ]; then
 fi
 
 if [ -d "${PYENV_ROOT}" ]; then
+
     echo -e "${GREEN} You already have pyenv, skipping the installation.${NC}"
+
 else
     banner "Installing pyenv, python, and pip3"
 
     curl https://pyenv.run | bash
+    
     echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
     echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
     echo 'eval "$(pyenv init -)"' >> ~/.bashrc
     
     source ~/.bash_profile
-    pyenv install 3.12.0
-    pyenv global 3.12.0
-    source ~/.bash_profile
+    
+    if command -v pyenv &> /dev/null; then
+        
+        pyenv install 3.12.0
+        pyenv global 3.12.0
+        
+        source ~/.bash_profile
+        currentpython=$(which python)
+        
+        if [ "$currentpython" == "${HOME}/.pyenv/shims/python" ]; then
+            echo -e "${GREEN}Python was installed correctly.${NC}"
+            pip3 install --upgrade pip
 
-    currentpython=$(which python)
-    if [ "$currentpython" == "${HOME}/.pyenv/shims/python" ]; then
-        echo -e "${GREEN}Python was installed correctly.${NC}"
-        pip3 install --upgrade pip
-    else
-        echo -e "${RED}Installation of Pyenv failed, please check it later.${NC}"
+        else
+
+            echo -e "${RED}Pyenv was installed correctly but Python failed, please check it later.${NC}"
+
+        fi
     fi
 fi
 
@@ -65,9 +76,13 @@ sudo pacman -S --noconfirm i3
 sudo pacman -S --noconfirm alacritty 
 sudo pacman -S --noconfirm fish
 sudo pacman -S --noconfirm feh
-fish 
-echo "/usr/local/bin/fish" | sudo tee -a /etc/shells
-chsh -s /usr/local/bin/fish
+sudo echo "/usr/local/bin/fish" | sudo tee -a /etc/shells
+sudo chsh -s /usr/local/bin/fish
+fish -e "
+        set -Ux PYENV_ROOT $HOME/.pyenv 
+        fish_add_path $PYENV_ROOT/bin
+" 
+
 
 # Set environment variables for the desired user again (in case they changed)
 export USER=$original_user
@@ -91,7 +106,7 @@ mv -f $HOME/.config/dotfiles/* $HOME/.config/
 sudo cp /etc/X11/xinit/xinitrc $HOME/.xinitrc
 
 for ((i=1;i<=5;i++)); do
-    sed -i '$d' $HOME/.xinitrc
+    sudo sed -i '$d' $HOME/.xinitrc
 done
 
 echo "exec i3" >> $HOME/.xinitrc
