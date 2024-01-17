@@ -2,97 +2,100 @@
 
 # To do list
 #
+# 0.  fix the pkg.list.
 # 1.  Create a function to install LazyVim instead of neovim.
+#     1.1  Remove some plugins i guess
 # 2.  Set your scripts to run with i3.
-# 3.  organize this code.
-# 4.  create a taskbar( maybe using polybar? ) and add a function to install it here
-# 5.  customize your dotfiles
-config_directory="$HOME/.config"
-fonts_directory="/usr/share/fonts"
+# 3.  customize your dotfiles
+#       some repos to source here:
+#       https://gitlab.com/user-asif/dotfiles
+#       https://github.com/dxmxnlord/Arch-Resources/
+#       https://github.com/salteax/dotfiles/
+#       https://github.com/3rfaan/dotfiles
 
-green='\033[0;32m'
-no_color='\033[0m'
-date=$(date +%s)
+source global_fn.s
+if [ $? -ne 0]; then
+	echo -e "${red}[!!]${no_color} Error: Unable to access global_fn.sh, must be in the same directory"
+	exit 1
+fi
 
-# Checkings
-system_checkings() {
-	if [[ "$EUID" -eq 0 ]]; then
-		echo "${red}[*]  DO NOT be root!.${no_color}"
-		exit 1
-	fi
+# Grub theme
+if pkg_installed grub && [ -f /boot/grub/grub.cfg ]; then
+	echo -e "${green}[*]  BOOTLOADER${no_color}: Grub detected..."
 
-	ping -c 1 -q google.com >&/dev/null
+	echo ""
+	while true; do
+		read -p "${green}[*]${no_color}  Apply grub theme: [Y/N] : " grubtheme
+		case $grubtheme in
+		[Yy])
+			echo -e "${green}[*]${no_color}  Changing grub theme..."
+			sudo tar -xzf ${CloneDir}/grub_theme/Hanya.tar.gz
+			sudo cp -r ${CloneDir}/grub_theme/Hanya /usr/share/grub/themes
+			sudo sed -i '$a\GRUB_THEME="/usr/share/grub/themes/Hanya/theme.txt"' /etc/default/grub
+			break
+			;;
 
-	if [[ $? != 0 ]]; then
-		echo "${red}[*]  Must have internet connection!${no_color}"
-		exit 1
-	fi
-}
+		[Nn])
+			echo -e "${red}[*]${no_color}  Skipping Grub Theme..."
+			break
+			;;
+		*)
+			echo -e "${green}[*]${no_color} Invalid option selected. Please enter a valid option."
+			;;
+		esac
+	done
 
-system_update() {
-	echo -e "${green}[*] Doing a system update, cause stuff may break if it's not the latest version...${no_color}"
-	sudo pacman -Sy --noconfirm archlinux-keyring
-	sudo pacman --noconfirm -Syu
-	sudo pacman -S --noconfirm --needed base-devel wget git curl dialog fish
-}
+	sudo grub-mkconfig -o /boot/grub/grub.cfg
+fi
 
-system_config() {
-	# Pacman config
-	sudo sed -i '33s/.*/Color/' /etc/pacman.conf
-	sudo sed -i '37a\ILoveCandy' /etc/pacman.conf
-	sudo sed -i '37s/.*/ParallelDownloads = 5/' /etc/pacman.conf
+# Pacman config
+sudo sed -i "/^#Color/c\Color\nILoveCandy
+    /^#VerbosePkgLists/c\VerbosePkgLists
+    /^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 
-	# Xinitrc file
-	cp /etc/X11/xinit/xinitrc ~/.xinitrc
-	sed -i '51,55d' ~/.xinitrc
-	sed -i '50a\exec i3' ~/.xinitrc
+# Xinitrc file
+cp /etc/X11/xinit/xinitrc ~/.xinitrc
+sed -i '51,55d' ~/.xinitrc
+sed -i '50a\exec i3' ~/.xinitrc
 
-	# i3 config
-	cd ~/.config && mkdir i3
+echo -e "${green}[*]${no_color} Doing a system update, cause stuff may break if it's not the latest version...${no_color}"
+sudo pacman -Syyu
+sudo pacman -Fy
 
-	cd i3 && curl https://raw.githubusercontent.com/sainathadapa/i3-wm-config/master/i3-default-config-backup -o config
+# i3 config
+#cd ~/.config && mkdir i3
+#cd i3 && curl https://raw.githubusercontent.com/sainathadapa/i3-wm-config/master/i3-default-config-backup -o config
+#sed -i '30s/.*/bindsym $mod+Return exec alacritty/' ~/.config/i3/config
+#sudo pacman -S --noconfirm --needed base-devel wget git curl dialog fish
 
-	sed -i '30s/.*/bindsym $mod+Return exec alacritty/' ~/.config/i3/config
-}
+# Select Shell
+while true; do
+	if ! pkg_installed zsh && ! pkg_installed fish; then
+		echo -e "${green}[*]${no_color} Select shell:\n1) zsh\n2) fish"
+		read -p "${green}[*]${no_color} Enter option number : " gsh
 
-install_aur_helper() {
-	if ! command -v "$aurhelper" &>/dev/null; then
-		echo -e "${green}[*] It seems that you don't have $aurhelper installed, I'll install that for you before continuing.${no_color}"
+		case $gsh in
+		1) export getShell="zsh" ;;
+		2) export getShell="fish" ;;
+		*) echo -e "${green}[*]${no_color} Invalid option selected. Please enter a valid option." ;;
+		esac
 
-		git clone https://aur.archlinux.org/"$aurhelper".git $HOME/.sources/"$aurhelper"
-		(cd $HOME/.sources/"$aurhelper"/ && makepkg -si)
+		if [[ -n "$getShell" ]]; then
+			echo "${getShell}" >>pkg_list.lst
+			break
+		fi
 	else
-		echo -e "${green}[*] It seems that you already have $aurhelper installed, skipping.${no_color}"
+		break
 	fi
-}
+done
+
+./install_pkg.sh pkg_list.lst
+
+### WORKING HERE YET !!!
 
 install_pkgs() {
 	echo -e "${green}[*] Installing packages with pacman.${no_color}"
 	sudo pacman -S --needed --noconfirm ttf-jetbrains-mono-nerd ttf-jetbrains-mono firefox feh xorg-xrandr unzip p7zip net-tools neovim neofetch nasm gcc nemo pacman-contrib openssl zlib xz tk man-db man-pages pkgconf xclip acpi alsa-utils xorg xorg-xinit alacritty btop i3 nemo polybar ranger rofi scrot
-}
-
-install_sublime_text() {
-	if command -v "$aurhelper" &>/dev/null; then
-		echo -e "${green} [*] Installing Sublime Text 4.${no_color}"
-		"$aurhelper" && "$aurhelper" -S --noconfirm --needed sublime-text-4
-	fi
-
-	# add the installation of plugins
-}
-
-install_obisidian() {
-	echo -e "${green}[*] Installing Obsidian. ${no_color}"
-	"$aurhelper" -S obsidian
-}
-
-install_vscode() {
-	echo -e "${green}[*]  Installing vscode.${no_color}"
-	"$aurhelper" -S visual-studio-code-bin
-}
-
-install_python() {
-	echo -e "${green}[*]  Installing python without pyenv.${no_color}"
-	sudo pacman -Sy --noconfirm python
 }
 
 install_python_with_pyenv() {
