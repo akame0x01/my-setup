@@ -19,7 +19,8 @@ chk_aurh
 
 if [ -z $aurhlpr ]; then
 	echo -e "${green}[*]${no_color} Select aur helper:\n1) yay\n2) paru"
-	read -p "${green}[*]${no_color} Enter option number : " aurinp
+	echo ""
+	read -p "[*] Enter option number : " aurinp
 
 	case $aurinp in
 	1) aurhlpr="yay" ;;
@@ -27,62 +28,48 @@ if [ -z $aurhlpr ]; then
 	*) echo -e "${green}[*]${no_color}  Invalid option selected... yay will be used" ;;
 	esac
 
-	echo "${green}[*]${no_color} installing dependency $aurhlpr..."
-	./install_aur.sh $aurhlpr 2>&1
+	echo -e "${green}[*]${no_color} installing dependency $aurhlpr..."
+	echo ""
+	./install_aur.sh $aurhlpr
 fi
 
 install_list="${1:-pkg_list.lst}"
-ofs=$IFS
-IFS='|'
 
-while read -r pkg deps; do
-	pkg="${pkg// /}"
-	if [ -z "${pkg}" ]; then
-		continue
-	fi
+# initialize the package variable
+pkg_arch=''
+pkg_aur=''
+n=0
 
-	if [ ! -z "${deps}" ]; then
-		while read -r cdep; do
-			pass=$(cut -d '#' -f 1 ${install_list} | awk -F '|' -v chk="${cdep}" '{if($1 == chk) {print 1;exit}}')
-			if [ -z "${pass}" ]; then
-				if pkg_installed ${cdep}; then
-					pass=1
-				else
-					break
-				fi
-			fi
-		done < <(echo "${deps}" | xargs -n1)
+spin_animation 60 "${cyan}[*]${no_color} Loading packages from $install_list" &
+pid=$!
+while IFS= read -r line; do
+	if pkg_available "$line"; then
+		pkg_arch+=" $line"
 
-		if [[ ${pass} -ne 1 ]]; then
-			echo "skipping ${pkg} due to missing (${deps}) dependency..."
-			continue
-		fi
-	fi
-
-	if pkg_installed ${pkg}; then
-		echo "skipping ${pkg}..."
-
-	elif pkg_available ${pkg}; then
-		echo "queueing ${pkg} from arch repo..."
-		pkg_arch=$(echo $pkg_arch ${pkg})
-
-	elif aur_available ${pkg}; then
-		echo "queueing ${pkg} from aur..."
-		pkg_aur=$(echo $pkg_aur ${pkg})
+	elif aur_available "$line"; then
+		pkg_aur+=" $line"
 
 	else
-		echo "error: unknown package ${pkg}..."
+		touch ~/pkgs.log
+		echo "[!!] package $line couldn't be founded in any available repo, please remember to install it later"
 	fi
-done < <(cut -d '#' -f 1 $install_list)
+done <$install_list
+kill $pid
 
-IFS=${ofs}
+echo -e "${green}[*]${no_color} installing packages from $install_list..."
+echo ""
 
 if [ $(echo $pkg_arch | wc -w) -gt 0 ]; then
-	echo "installing $pkg_arch from arch repo..."
-	sudo pacman ${use_default} -S $pkg_arch
+	echo -e "${green}[*]${no_color}  installing $pkg_arch from arch repo..."
+	echo ""
+	sudo pacman --needed --noconfirm -S $pkg_arch
 fi
 
 if [ $(echo $pkg_aur | wc -w) -gt 0 ]; then
-	echo "installing $pkg_aur from aur..."
-	$aurhlpr ${use_default} -S $pkg_aur
+	echo -e "${green}[*]${no_color}  installing $pkg_aur from aur..."
+	echo ""
+	$aurhlpr --needed --noconfirm -S $pkg_aur
 fi
+
+$aurhlpr -Sc
+echo ""
