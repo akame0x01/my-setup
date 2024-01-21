@@ -9,8 +9,25 @@ cfg_dir="$HOME/.config"
 fonts_dir="/usr/share/fonts"
 green='\033[0;32m'
 no_color='\033[0m'
+red='\e[31m'
+cyan='\033[0;36m'
 
 CloneDir=$(dirname "$(dirname "$(realpath "$0")")")
+
+spin_animation() {
+	local duration=$1
+	local message=$2
+	local spin_chars="/-\|"
+
+	echo -e -n "$message "
+
+	for ((i = 0; i < duration * 4; i++)); do
+		printf "%s\b" "${spin_chars:i%4:1}"
+		sleep 0.25
+	done
+
+	echo -e " \b" # Move to the next line and reset the cursor
+}
 
 chk_basic() {
 	if [ "$EUID" -eq 0 ]; then
@@ -59,7 +76,7 @@ chk_aurh() {
 }
 
 aur_available() {
-	local $PkgIn=$1
+	local PkgIn=$1
 	chk_aurh
 
 	if $aurhlpr -Si $PkgIn &>/dev/null; then

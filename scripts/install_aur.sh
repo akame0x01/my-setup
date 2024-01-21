@@ -4,9 +4,9 @@
 #|-/ /--| Prasanth Rangan                   |-/ /--|#
 #|/ /---+-----------------------------------+/ /---|#
 
-source global_fn.s
+source global_fn.sh
 
-if [ $? -ne 0]; then
+if [ $? -ne 0 ]; then
 	echo -e "${red}[!!]${no_color} Error: Unable to access global_fn.sh, must be in the same directory..."
 	exit 1
 fi
@@ -18,10 +18,10 @@ if pkg_installed yay || pkg_installed paru; then
 	exit 0
 fi
 
-if [ -d ./sources ]; then
+if [ -d "$HOME/.sources" ]; then
 	rm -rf ~/.sources/$aurhlpr
 else
-	mkdir ~/.sources/
+	mkdir -p ~/.sources/
 fi
 
 if pkg_installed git; then
@@ -35,9 +35,9 @@ cd ~/.sources/$aurhlpr
 makepkg ${use_default} -si
 
 if [ $? -eq 0 ]; then
-	echo "${green}[*]${no_color}  $aurhlpr aur helper installed..."
-	exit 0
+	echo -e "${green}[*]${no_color}  $aurhlpr was installed..."
+	cd ${CloneDir}/scripts
 else
-	echo "${red}[!!]${no_color}   Error: $aurhlpr installation failed..."
+	echo -e "${red}[!!]${no_color}   Error: $aurhlpr installation failed..."
 	exit 1
 fi
