@@ -63,13 +63,11 @@ echo -e "${green}[*]${no_color} installing packages from $install_list..."
 echo ""
 
 if [ $(echo $pkg_arch | wc -w) -gt 0 ]; then
-	echo -e "${green}[*]${no_color}  installing $pkg_arch from arch repo..."
 	echo ""
 	sudo pacman --needed --noconfirm -S $pkg_arch
 fi
 
 if [ $(echo $pkg_aur | wc -w) -gt 0 ]; then
-	echo -e "${green}[*]${no_color}  installing $pkg_aur from aur..."
 	echo ""
 	$aurhlpr --needed --noconfirm -S $pkg_aur
 fi

@@ -44,6 +44,7 @@ cat <<"EOF"
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢫⣽⡋⠭⠶⠮⢽⣿⣆⠀⠀⠀⠀⢠⣿⣓⣽⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⢹⣶⣦⣾⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 EOF
+
 echo -e "${green}[*]${no_color} Sometimes you'll be ask to import keys or install some dependency packages, make sure to don't refuse them..."
 echo ""
 read -n 1 -s -r -p "Press any key to continue..."
@@ -192,13 +193,13 @@ mkdir -p "$HOME"/pics/wallpapers
 mkdir -p "$HOME"/downloads
 mkdir -p "$HOME"/projects
 
-echo -e "${green}[*]$no_color Copying configs to $config_directory..."
+echo -e "${green}[*]$no_color Copying configs to ~/.config/"
 echo ""
 git clone https://github.com/moraeskkj/dotfiles.git ~/dotfiles
 sudo rm -rf ~/dotfiles/arch-ricing.png ~/dotfiles/qtile/ ~/dotfiles/picom/ ~/dotfiles/nvim/
 
-if [ -f "$HOME/.config/fish/config.fish" ]; then
-	sudo rm -rf ~/.config/fish/config.fish
+if [ -d "$HOME/.config/fish/" ]; then
+	sudo rm -rf ~/.config/fish/
 fi
 mv -f ~/dotfiles/* ~/.config/
 
@@ -220,8 +221,6 @@ sudo chsh -s /usr/bin/$getShell $USER
 
 fc-cache -fv
 sudo systemctl enable paccache.timer
-
-# source ~/.config/scripts/resizeResolution.sh
 
 echo -e "${green}[*]$no_color Installing vsc extensions..."
 echo ""
