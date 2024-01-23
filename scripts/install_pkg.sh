@@ -53,7 +53,6 @@ while IFS= read -r line; do
 		touch ~/pkgs.log
 		echo "[!!] package $line couldn't be founded in any available repo, please remember to install it later"
 	fi
-
 done <$install_list
 kill $pid
 

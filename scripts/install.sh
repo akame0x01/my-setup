@@ -95,12 +95,11 @@ sudo pacman -Syyu
 sudo pacman -Fy
 
 # i3 config
-mkdir -p "$HOME"/.config/i3
-
 if ! pkg_installed curl; then
 	sudo pacman -S curl
 fi
 
+mkdir -p "$HOME"/.config/i3
 curl -s https://raw.githubusercontent.com/sainathadapa/i3-wm-config/master/i3-default-config-backup -o "$HOME"/.config/i3/config
 sed -i '30s/.*/bindsym $mod+Return exec alacritty/' ~/.config/i3/config
 
@@ -161,7 +160,7 @@ if [ "$getShell" == "fish" ]; then
 	fish -c "pyenv install 3.12.0"
 
 	if [ $? -eq 0 ]; then
-		fish -c "pyenv install 3.12.0"
+		fish -c "pyenv global 3.12.0"
 		echo -e "${green}[*]$no_color  Pyenv and python installed, updating pip now...."
 		fish -c "pip3 install --upgrade pip"
 	else
@@ -201,7 +200,6 @@ sudo rm -rf ~/dotfiles/arch-ricing.png ~/dotfiles/qtile/ ~/dotfiles/picom/ ~/dot
 if [ -f "$HOME/.config/fish/config.fish" ]; then
 	sudo rm -rf ~/.config/fish/config.fish
 fi
-
 mv -f ~/dotfiles/* ~/.config/
 
 echo -e "${green}[*]${no_color}  Pushing your directories and doing simple git config..."
