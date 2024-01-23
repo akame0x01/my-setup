@@ -16,4 +16,7 @@
     - `:-` - is used to set a default value(i.e `${1:-yay}`: This is a parameter expansion or substitution that retrieves the value of the first command-line argument ($1). The :- syntax is used to provide a default value if the variable is unset or null. In this case, if $1 is unset or null, it defaults to "yay".)
     - ` -z ` - checks if a variable is NULL or zero length.
 
+<<<<<<< HEAD
+=======
 first trying to work in a project using two branchs
+>>>>>>> ae67351 (erros in install_pkg.sh fixed; loading function in global_fn.sh)
