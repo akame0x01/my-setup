@@ -42,13 +42,13 @@ n=0
 
 spin_animation 60 "${cyan}[*]${no_color} Loading packages from $install_list" &
 pid=$!
+
 while IFS= read -r line; do
 	if pkg_available "$line"; then
 		pkg_arch+=" $line"
 
 	elif aur_available "$line"; then
 		pkg_aur+=" $line"
-
 	else
 		touch ~/pkgs.log
 		echo "[!!] package $line couldn't be founded in any available repo, please remember to install it later"

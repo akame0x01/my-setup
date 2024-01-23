@@ -19,7 +19,7 @@ spin_animation() {
 	local message=$2
 	local spin_chars="/-\|"
 
-	echo -e -n "${cyan}$message${no_color} "
+	echo -e -n "$message "
 
 	for ((i = 0; i < duration * 4; i++)); do
 		printf "%s\b" "${spin_chars:i%4:1}"
