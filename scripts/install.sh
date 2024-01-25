@@ -2,7 +2,9 @@
 
 # To do list
 # 1. use your system a little to customize your new polybar and i3 configs, after all, you need to set them here
-# 2.
+# 2. Install LazyVim too
+# 3. use archinstall in this script with a default customization? is it necessary?
+# 4.
 
 source global_fn.sh
 if [ $? -ne 0 ]; then
@@ -46,11 +48,11 @@ cat <<"EOF"
 EOF
 
 echo -e "${green}[*]${no_color} Sometimes you'll be ask to import keys or install some dependency packages, make sure to don't refuse them..."
-echo ""
 read -n 1 -s -r -p "Press any key to continue..."
-
+echo ""
 # Grub theme
 if pkg_installed grub && [ -f /boot/grub/grub.cfg ]; then
+	echo ""
 	echo -e "${green}[*]${no_color} Grub detected..."
 
 	echo ""
@@ -87,6 +89,11 @@ sudo sed -i "/^#Color/c\Color\nILoveCandy
     /^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 
 # Xinitrc file
+
+if [ ! -f /etc/X11/xinit/xinitrc ]; then
+	sudo pacman -Syu xorg
+fi
+
 cp /etc/X11/xinit/xinitrc ~/.xinitrc
 sed -i '51,55d' ~/.xinitrc
 sed -i '50a\exec i3' ~/.xinitrc

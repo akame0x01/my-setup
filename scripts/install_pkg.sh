@@ -38,8 +38,8 @@ install_list="${1:-pkg_list.lst}"
 # initialize the package variable
 pkg_arch=''
 pkg_aur=''
-n=0
 
+echo ""
 spin_animation 60 "${cyan}[*]${no_color} Loading packages from $install_list" &
 pid=$!
 
@@ -69,6 +69,13 @@ fi
 
 if [ $(echo $pkg_aur | wc -w) -gt 0 ]; then
 	echo ""
+
+	for pkg in $pkg_aur; do
+		if [ "$pkg" == "spotify" ]; then
+			curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | gpg --import -
+		fi
+	done
+
 	$aurhlpr --needed --noconfirm -S $pkg_aur
 fi
 

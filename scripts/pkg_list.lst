@@ -1,7 +1,9 @@
 ttf-jetbrains-mono-nerd 
 ttf-jetbrains-mono 
-firefox 
 ncurses5-compat-libs
+devtools
+base-devel
+firefox 
 pyenv
 feh 
 xorg-xrandr 
@@ -23,8 +25,6 @@ pkgconf
 xclip 
 acpi 
 alsa-utils 
-xorg 
-xorg-xinit 
 alacritty 
 btop 
 i3-wm
