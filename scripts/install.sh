@@ -1,10 +1,9 @@
 #!/bin/bash
 
 # To do list
-# 1. use your system a little to customize your new polybar and i3 configs, after all, you need to set them here
-# 2. Install LazyVim too
-# 3. use archinstall in this script with a default customization? is it necessary?
-# 4.
+# 1. fixing pkgs list
+# 2. install polybar and themes
+# 3. Vmware things && drivers to xorg
 
 source global_fn.sh
 if [ $? -ne 0 ]; then
@@ -50,6 +49,7 @@ EOF
 echo -e "${green}[*]${no_color} Sometimes you'll be ask to import keys or install some dependency packages, make sure to don't refuse them..."
 read -n 1 -s -r -p "Press any key to continue..."
 echo ""
+
 # Grub theme
 if pkg_installed grub && [ -f /boot/grub/grub.cfg ]; then
 	echo ""
@@ -96,20 +96,12 @@ fi
 
 cp /etc/X11/xinit/xinitrc ~/.xinitrc
 sed -i '51,55d' ~/.xinitrc
-sed -i '50a\exec i3' ~/.xinitrc
+sed -i '50a\vmware-user &' ~/.xinitrc
+sed -i '51a\exec i3' ~/.xinitrc
 
 echo -e "${green}[*]${no_color} Doing a system update, cause stuff may break if it's not the latest version...${no_color}"
 sudo pacman -Syyu
 sudo pacman -Fy
-
-# i3 config
-if ! pkg_installed curl; then
-	sudo pacman -S curl
-fi
-
-mkdir -p "$HOME"/.config/i3
-curl -s https://raw.githubusercontent.com/sainathadapa/i3-wm-config/master/i3-default-config-backup -o "$HOME"/.config/i3/config
-sed -i '30s/.*/bindsym $mod+Return exec alacritty/' ~/.config/i3/config
 
 # Select Shell
 while true; do
@@ -132,20 +124,27 @@ while true; do
 	fi
 done
 
-# Select text editor
+# Vmware things
 while true; do
-	if ! pkg_installed code && ! pkg_installed sublime-text-4; then
-		echo -e "${green}[*]${no_color} Select TextEditor:\n1) vscode\n2) sublime"
-		read -p "[*]  Enter option number : " gte
+	echo -e "${green}[*]${no_color} Do you want additions for Vmware?(Only accept it if you are running arch on Vmware)"
+	if ! pkg_installed open-vm-tools; then
+		read -p "[*]  Install Vmware Tools and drivers : [Y/n] " gVM
 
-		case $gte in
-		1) export getTextEd="code" ;;
-		2) export getTextEd="sublime-text-4" ;;
+		case $gVM in
+		[yY])
+			echo -e "gtkmm3\nopen-vm-tools\nxf86-video-vmware\nxf86-input-vmmouse\nmesa\n" >>pkg_list.lst
+			#Install open-vm-tools. Start and/or enable vmtoolsd.service and vmware-vmblock-fuse.service.
+
+			;;
+
+		[nN]) export getTextEd="sublime-text-4" ;;
+
 		*) echo -e "${red}[*]${no_color} Invalid option selected. Please enter a valid option." ;;
+
 		esac
 
-		if [[ -n "$getTextEd" ]]; then
-			echo "${getTextEd}" >>pkg_list.lst
+		if [[ -n "$gVM" ]]; then
+			echo "${gVM}" >>pkg_list.lst
 			break
 		fi
 	else
@@ -153,57 +152,85 @@ while true; do
 	fi
 done
 
+# Pyenv
+if ! pkg_installed pyenv && [ ! -d "$HOME/.pyenv" ]; then
+	while true; do
+		read -p "[*] Install Pyenv to manage python versions? [Y/N] : " pyenvchoice
+		case $pyenvchoice in
+		[Yy])
+			echo ""
+			export getPyenv="pyenv"
+			echo "pyenv" >>pkg_list.lst
+			break
+			;;
+
+		[Nn])
+			echo ""
+			echo -e "${red}[*]${no_color}  Skipping pyenv installation..."
+			echo "python" >>pkg_list.lst
+			break
+			;;
+		*)
+			echo -e "${green}[*]${no_color} Invalid option selected. Please enter a valid option."
+			;;
+		esac
+	done
+fi
+
 ./install_pkg.sh pkg_list.lst
 
-echo -e "${green}[*]$no_color  Installing python 3.12.0 with pyenv..."
+if [ -n $getPyenv ]; then
+	echo -e "${green}[*]$no_color  Installing python 3.12.0 with pyenv..."
 
-if [ "$getShell" == "fish" ]; then
-	# post-installation steps
-	fish -c "
+	if [ "$getShell" == "fish" ]; then
+		# post-installation steps
+		fish -c "
     set -Ux PYENV_ROOT $HOME/.pyenv 
     fish_add_path $PYENV_ROOT/bin
     "
-	echo "pyenv init - | source" | tee -a ~/.config/fish/config.fish
+		echo "pyenv init - | source" | tee -a ~/.config/fish/config.fish
 
-	fish -c "pyenv install 3.12.0"
+		fish -c "pyenv install 3.12.0"
 
-	if [ $? -eq 0 ]; then
-		fish -c "pyenv global 3.12.0"
-		echo -e "${green}[*]$no_color  Pyenv and python installed, updating pip now...."
-		fish -c "pip3 install --upgrade pip"
+		if [ $? -eq 0 ]; then
+			fish -c "pyenv global 3.12.0"
+			echo -e "${green}[*]$no_color  Pyenv and python installed, updating pip now...."
+			fish -c "pip3 install --upgrade pip"
+		else
+			echo -e "${red}[!!]$no_color Error: python wasn't installed..."
+			exit 1
+		fi
+
 	else
-		echo -e "${red}[!!]$no_color Error: python wasn't installed..."
-		exit 1
-	fi
+		echo 'export PYENV_ROOT="$HOME/.pyenv"' >>~/.zshrc
+		echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >>~/.zshrc
+		echo 'eval "$(pyenv init -)"' >>~/.zshrc
 
-else
-	echo 'export PYENV_ROOT="$HOME/.pyenv"' >>~/.zshrc
-	echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >>~/.zshrc
-	echo 'eval "$(pyenv init -)"' >>~/.zshrc
-
-	zsh -c "pyenv install 3.12.0"
-	if [ $? -eq 0 ]; then
-		zsh -c "pyenv global 3.12.0"
-		echo -e "${green}[*]$no_color  Pyenv and python installed, updating pip now...."
-		zsh -c "pip3 install --upgrade pip"
-	else
-		echo -e "${red}[!!]$no_color Error: python wasn't installed..."
-		exit 1
+		zsh -c "pyenv install 3.12.0"
+		if [ $? -eq 0 ]; then
+			zsh -c "pyenv global 3.12.0"
+			echo -e "${green}[*]$no_color  Pyenv and python installed, updating pip now...."
+			zsh -c "pip3 install --upgrade pip"
+		else
+			echo -e "${red}[!!]$no_color Error: python wasn't installed..."
+			exit 1
+		fi
 	fi
 fi
+
+# Drivers verification
 
 # Another directories will be created using git
 echo -e "${green}[*]$no_color Creating default directories..."
 echo ""
 mkdir -p "$HOME"/.config
 mkdir -p "$HOME"/pics/wallpapers
-mkdir -p "$HOME"/downloads
+mkdir -p "$HOME"/Downloads
 mkdir -p "$HOME"/projects
 
 echo -e "${green}[*]$no_color Copying configs to ~/.config/"
 echo ""
 git clone https://github.com/moraeskkj/dotfiles.git ~/dotfiles
-sudo rm -rf ~/dotfiles/arch-ricing.png ~/dotfiles/qtile/ ~/dotfiles/picom/ ~/dotfiles/nvim/
 
 if [ -d "$HOME/.config/fish/" ]; then
 	sudo rm -rf ~/.config/fish/
@@ -216,7 +243,7 @@ git config --global init.defaultBranch main
 git config --global user.name "moraeskkj"
 git config --global user.email "mooraesz123@gmail.com"
 
-git clone https://github.com/moraeskkj/all-ctfs ~/my-ctfs
+git clone https://github.com/moraeskkj/all-ctfs ~/capture_the_flag
 git clone https://github.com/moraeskkj/learning-c-assignments ~/learning-c-assignments
 mv ~/learning-c-assignments ~/projects
 
@@ -229,10 +256,7 @@ sudo chsh -s /usr/bin/$getShell $USER
 fc-cache -fv
 sudo systemctl enable paccache.timer
 
-echo -e "${green}[*]$no_color Installing vsc extensions..."
-echo ""
-code --install-extension zhuangtongfa.Material-theme
-cp ./vsc/settings.json "$HOME"/.config/Code\ -\ OSS/User
+# install polybar
 
 if [ -f "$HOME/pkgs.log" ]; then
 	echo "${red}[*]${no_color}"
