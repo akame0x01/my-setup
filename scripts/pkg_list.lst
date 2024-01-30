@@ -4,7 +4,6 @@ ncurses5-compat-libs
 devtools
 base-devel
 firefox 
-pyenv
 feh 
 xorg-xrandr 
 unzip 
@@ -13,7 +12,6 @@ net-tools
 neofetch 
 nasm 
 gcc 
-nemo 
 pacman-contrib 
 openssl 
 zlib 
@@ -23,16 +21,13 @@ man-db
 man-pages 
 pkgconf 
 xclip 
-acpi 
-alsa-utils 
 alacritty 
 btop 
 i3-wm
 i3blocks
 i3lock
 i3status
-python-pywal
-nemo 
+python-pywal 
 polybar 
 ranger 
 rofi 
@@ -40,6 +35,4 @@ scrot
 spotify
 gobuster
 hashcat
-discord
-fish
-code
+
