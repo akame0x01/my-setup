@@ -96,7 +96,6 @@ fi
 
 cp /etc/X11/xinit/xinitrc ~/.xinitrc
 sed -i '51,55d' ~/.xinitrc
-sed -i '50a\vmware-user &' ~/.xinitrc
 sed -i '51a\exec i3' ~/.xinitrc
 
 echo -e "${green}[*]${no_color} Doing a system update, cause stuff may break if it's not the latest version...${no_color}"
@@ -125,32 +124,25 @@ while true; do
 done
 
 # Vmware things
-while true; do
-	echo -e "${green}[*]${no_color} Do you want additions for Vmware?(Only accept it if you are running arch on Vmware)"
-	if ! pkg_installed open-vm-tools; then
+if ! pkg_installed open-vm-tools; then
+	while true; do
+		echo -e "${green}[*]${no_color} Do you want additions for Vmware?(Only accept it if you are running arch on Vmware)"
 		read -p "[*]  Install Vmware Tools and drivers : [Y/n] " gVM
 
 		case $gVM in
 		[yY])
 			echo -e "gtkmm3\nopen-vm-tools\nxf86-video-vmware\nxf86-input-vmmouse\nmesa\n" >>pkg_list.lst
-			#Install open-vm-tools. Start and/or enable vmtoolsd.service and vmware-vmblock-fuse.service.
-
-			;;
-
-		[nN]) export getTextEd="sublime-text-4" ;;
-
-		*) echo -e "${red}[*]${no_color} Invalid option selected. Please enter a valid option." ;;
-
-		esac
-
-		if [[ -n "$gVM" ]]; then
-			echo "${gVM}" >>pkg_list.lst
+			sed -i '50a\vmware-user &' ~/.xinitrc
 			break
-		fi
-	else
-		break
-	fi
-done
+			;;
+		[nN])
+			echo -e "${red}[*]${no_color}  Skipping Vmware drivers"
+			break
+			;;
+		*) echo -e "${red}[*]${no_color} Invalid option selected. Please enter a valid option." ;;
+		esac
+	done
+fi
 
 # Pyenv
 if ! pkg_installed pyenv && [ ! -d "$HOME/.pyenv" ]; then
@@ -218,8 +210,6 @@ if [ -n $getPyenv ]; then
 	fi
 fi
 
-# Drivers verification
-
 # Another directories will be created using git
 echo -e "${green}[*]$no_color Creating default directories..."
 echo ""
@@ -255,8 +245,15 @@ sudo chsh -s /usr/bin/$getShell $USER
 
 fc-cache -fv
 sudo systemctl enable paccache.timer
+sudo systemctl enable vmtoolsd.service
+sudo systemctl enable vmware-vmblock-fuse.service
 
 # install polybar
+git clone --depth=1 https://github.com/adi1090x/polybar-themes.git
+chmod +x polybar-themes/setup.sh
+./polybar-themes/setup.sh
+
+nvim
 
 if [ -f "$HOME/pkgs.log" ]; then
 	echo "${red}[*]${no_color}"
