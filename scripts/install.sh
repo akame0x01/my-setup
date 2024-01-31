@@ -94,6 +94,15 @@ echo -e "${green}[*]${no_color} Doing a system update, cause stuff may break if 
 sudo pacman -Syyu
 sudo pacman -Fy
 
+# Xinitrc file
+if [ ! -f /etc/X11/xinit/xinitrc ]; then
+	sudo pacman -Syu xorg
+fi
+
+cp /etc/X11/xinit/xinitrc ~/.xinitrc
+sed -i '51,55d' ~/.xinitrc
+sed -i '50a\exec i3' ~/.xinitrc
+
 # Select Shell
 while true; do
 	if ! pkg_installed zsh && ! pkg_installed fish; then
@@ -128,7 +137,7 @@ if ! pkg_installed open-vm-tools; then
 		case $gVM in
 		[yY])
 			echo -e "gtkmm3\nopen-vm-tools\nxf86-video-vmware\nxf86-input-vmmouse\nmesa\n" >>pkg_list.lst
-			sed -i '51a\vmware-user &' ~/.xinitrc
+			sed -i '50a\vmware-user &' ~/.xinitrc
 			break
 			;;
 		[nN])
@@ -166,15 +175,6 @@ if ! pkg_installed pyenv && [ ! -d "$HOME/.pyenv" ]; then
 		esac
 	done
 fi
-
-# Xinitrc file
-if [ ! -f /etc/X11/xinit/xinitrc ]; then
-	sudo pacman -Syu xorg
-fi
-
-cp /etc/X11/xinit/xinitrc ~/.xinitrc
-sed -i '51,55d' ~/.xinitrc
-sed -i '53a\exec i3' ~/.xinitrc
 
 ./install_pkg.sh pkg_list.lst
 
@@ -245,6 +245,9 @@ if [ -d "$HOME/.config/fish/" ]; then
 	sudo rm -rf ~/.config/fish/
 fi
 
+# the code will overwrite it with my config
+sudo rm -rf .config/polybar/
+
 mv -f ~/dotfiles/* ~/.config/
 mv ~/my-setup/shells ~/mystuffs/
 mv ~/learning-c-assignments ~/projects
@@ -267,6 +270,8 @@ if [ -f "$HOME/pkgs.log" ]; then
 	cat ~/pkgs.log
 fi
 
+sudo rm -rf ~/go
+sudo rm -rf ~/dotfiles
 fc-cache -fv
 $aurhlpr -Sc
 echo ""
