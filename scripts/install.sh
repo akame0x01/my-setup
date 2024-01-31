@@ -248,6 +248,7 @@ fi
 # the code will overwrite it with my config
 sudo rm -rf .config/polybar/
 
+mv -f ~/dotfiles/wallpapers/* ~/pics/wallpapers/
 mv -f ~/dotfiles/* ~/.config/
 mv ~/my-setup/shells ~/mystuffs/
 mv ~/learning-c-assignments ~/projects
