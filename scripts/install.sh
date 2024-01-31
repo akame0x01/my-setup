@@ -46,9 +46,9 @@ cat <<"EOF"
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⢹⣶⣦⣾⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 EOF
 
+echo ""
 echo -e "${green}[*]${no_color} Sometimes you'll be ask to import keys or install some dependency packages, make sure to don't refuse them..."
 read -n 1 -s -r -p "Press any key to continue..."
-echo ""
 
 # Grub theme
 if pkg_installed grub && [ -f /boot/grub/grub.cfg ]; then
@@ -75,6 +75,7 @@ if pkg_installed grub && [ -f /boot/grub/grub.cfg ]; then
 			break
 			;;
 		*)
+			echo ""
 			echo -e "${green}[*]${no_color} Invalid option selected. Please enter a valid option."
 			;;
 		esac
@@ -88,16 +89,7 @@ sudo sed -i "/^#Color/c\Color\nILoveCandy
     /^#VerbosePkgLists/c\VerbosePkgLists
     /^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 
-# Xinitrc file
-
-if [ ! -f /etc/X11/xinit/xinitrc ]; then
-	sudo pacman -Syu xorg
-fi
-
-cp /etc/X11/xinit/xinitrc ~/.xinitrc
-sed -i '51,55d' ~/.xinitrc
-sed -i '51a\exec i3' ~/.xinitrc
-
+echo ""
 echo -e "${green}[*]${no_color} Doing a system update, cause stuff may break if it's not the latest version...${no_color}"
 sudo pacman -Syyu
 sudo pacman -Fy
@@ -105,7 +97,9 @@ sudo pacman -Fy
 # Select Shell
 while true; do
 	if ! pkg_installed zsh && ! pkg_installed fish; then
+		echo ""
 		echo -e "${green}[*]${no_color} Select shell:\n1) zsh\n2) fish"
+		echo ""
 		read -p "[*] Enter option number : " gsh
 
 		case $gsh in
@@ -126,16 +120,19 @@ done
 # Vmware things
 if ! pkg_installed open-vm-tools; then
 	while true; do
+		echo ""
 		echo -e "${green}[*]${no_color} Do you want additions for Vmware?(Only accept it if you are running arch on Vmware)"
+		echo ""
 		read -p "[*]  Install Vmware Tools and drivers : [Y/n] " gVM
 
 		case $gVM in
 		[yY])
 			echo -e "gtkmm3\nopen-vm-tools\nxf86-video-vmware\nxf86-input-vmmouse\nmesa\n" >>pkg_list.lst
-			sed -i '50a\vmware-user &' ~/.xinitrc
+			sed -i '51a\vmware-user &' ~/.xinitrc
 			break
 			;;
 		[nN])
+			echo ""
 			echo -e "${red}[*]${no_color}  Skipping Vmware drivers"
 			break
 			;;
@@ -147,10 +144,10 @@ fi
 # Pyenv
 if ! pkg_installed pyenv && [ ! -d "$HOME/.pyenv" ]; then
 	while true; do
+		echo ""
 		read -p "[*] Install Pyenv to manage python versions? [Y/N] : " pyenvchoice
 		case $pyenvchoice in
 		[Yy])
-			echo ""
 			export getPyenv="pyenv"
 			echo "pyenv" >>pkg_list.lst
 			break
@@ -163,15 +160,26 @@ if ! pkg_installed pyenv && [ ! -d "$HOME/.pyenv" ]; then
 			break
 			;;
 		*)
+			echo ""
 			echo -e "${green}[*]${no_color} Invalid option selected. Please enter a valid option."
 			;;
 		esac
 	done
 fi
 
+# Xinitrc file
+if [ ! -f /etc/X11/xinit/xinitrc ]; then
+	sudo pacman -Syu xorg
+fi
+
+cp /etc/X11/xinit/xinitrc ~/.xinitrc
+sed -i '51,55d' ~/.xinitrc
+sed -i '53a\exec i3' ~/.xinitrc
+
 ./install_pkg.sh pkg_list.lst
 
 if [ -n $getPyenv ]; then
+	echo ""
 	echo -e "${green}[*]$no_color  Installing python 3.12.0 with pyenv..."
 
 	if [ "$getShell" == "fish" ]; then
@@ -210,48 +218,47 @@ if [ -n $getPyenv ]; then
 	fi
 fi
 
-# Another directories will be created using git
-echo -e "${green}[*]$no_color Creating default directories..."
-echo ""
-mkdir -p "$HOME"/.config
-mkdir -p "$HOME"/pics/wallpapers
-mkdir -p "$HOME"/Downloads
-mkdir -p "$HOME"/projects
-
-echo -e "${green}[*]$no_color Copying configs to ~/.config/"
-echo ""
-git clone https://github.com/moraeskkj/dotfiles.git ~/dotfiles
-
-if [ -d "$HOME/.config/fish/" ]; then
-	sudo rm -rf ~/.config/fish/
-fi
-mv -f ~/dotfiles/* ~/.config/
-
-echo -e "${green}[*]${no_color}  Pushing your directories and doing simple git config..."
-echo ""
 git config --global init.defaultBranch main
 git config --global user.name "moraeskkj"
 git config --global user.email "mooraesz123@gmail.com"
 
+# install polybar
+git clone --depth=1 https://github.com/adi1090x/polybar-themes.git
+cd polybar-themes
+chmod +x setup.sh
+./setup.sh
+
+# Another directories will be created using git
+echo ""
+echo -e "${green}[*]$no_color Creating default directories..."
+mkdir -p "$HOME"/.config
+mkdir -p "$HOME"/pics/wallpapers
+mkdir -p "$HOME"/Downloads
+mkdir -p "$HOME"/projects
+mkdir -p "$HOME"/mystuffs
+
+git clone https://github.com/moraeskkj/dotfiles.git ~/dotfiles
 git clone https://github.com/moraeskkj/all-ctfs ~/capture_the_flag
 git clone https://github.com/moraeskkj/learning-c-assignments ~/learning-c-assignments
+
+if [ -d "$HOME/.config/fish/" ]; then
+	sudo rm -rf ~/.config/fish/
+fi
+
+mv -f ~/dotfiles/* ~/.config/
+mv ~/my-setup/shells ~/mystuffs/
 mv ~/learning-c-assignments ~/projects
 
-echo -e "${green}[*]$no_color Setting $getShell as default shell..."
 echo ""
-
+echo -e "${green}[*]$no_color Setting $getShell as default shell..."
 echo "/usr/bin/${getShell}" | sudo tee -a /etc/shells
 sudo chsh -s /usr/bin/$getShell $USER
 
-fc-cache -fv
 sudo systemctl enable paccache.timer
-sudo systemctl enable vmtoolsd.service
-sudo systemctl enable vmware-vmblock-fuse.service
-
-# install polybar
-git clone --depth=1 https://github.com/adi1090x/polybar-themes.git
-chmod +x polybar-themes/setup.sh
-./polybar-themes/setup.sh
+if [ -n $gVM ]; then
+	sudo systemctl enable vmtoolsd.service
+	sudo systemctl enable vmware-vmblock-fuse.service
+fi
 
 nvim
 
@@ -260,5 +267,7 @@ if [ -f "$HOME/pkgs.log" ]; then
 	cat ~/pkgs.log
 fi
 
-echo -e "${green}[*]$no_color Script execution complete. You may reboot now.${no_color}"
+fc-cache -fv
+$aurhlpr -Sc
 echo ""
+echo -e "${green}[*]$no_color Script execution complete. You may reboot now.${no_color}"

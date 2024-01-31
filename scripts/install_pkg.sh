@@ -78,6 +78,3 @@ if [ $(echo $pkg_aur | wc -w) -gt 0 ]; then
 
 	$aurhlpr --needed --noconfirm -S $pkg_aur
 fi
-
-$aurhlpr -Sc
-echo ""
